@@ -1,0 +1,38 @@
+services:
+  survival-server-001:
+    image: itzg/minecraft-server:latest
+    pull_policy: daily
+    tty: true
+    stdin_open: true
+    ports:
+      - "25565:25565" # Minecraft server port
+
+    environment:
+      # System settings
+      EULA: "TRUE"
+      MEMORY: "8G"                             # 2048M is too low for this modpack
+      USE_MEOWICE_FLAGS: "TRUE"                 # Use Meowice's flags for better performance (recommended)
+      OPS_FILE: /configuration/ops-list.json    # List of users to granted OP status
+      EXISTING_OPS_FILE: "SYNCHRONIZE"          # Synchronize in-game ops with the container's ops.json file
+
+      # World settings
+      LEVEL: "survival_world"                     # Name of the world folder
+      MOTD: "Welcome to FortuneCooky's minecraft server...of DOOOOMM!"
+      DIFFICULTY: "normal"            # peaceful, easy, normal, hard
+      #SEED: -7775094310068025774     # Grand canyon
+      SEED: -281032838528851848       # The forever world
+      MODE: "survival"                # creative, survival, adventure, spectator
+
+      # Mods and plugins
+      MODPACK_PLATFORM: AUTO_CURSEFORGE
+      CF_SLUG: all-the-mods-10
+      # CF_API_KEY: ${CF_API_KEY}     # An API key is now included within the image, so not required. If using your own key, store it in a .env file and uncomment this line.
+      # COPY_MODS_SRC: /mods          # I don't think this is needed.
+      # COPY_PLUGINS_SRC: /plugins    
+
+
+    volumes:
+      - ./data/survival-server-001:/data
+      - ./configuration:/configuration:ro
+      # - ./mods:/mods-common:ro
+      # - ./plugins:/plugins-common:ro
