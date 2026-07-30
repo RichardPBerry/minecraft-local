@@ -2,6 +2,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 from flask import Flask, jsonify, render_template
@@ -16,14 +17,38 @@ BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
 CONFIG_PATH = BASE_DIR / "config" / "servers.json"
 
+sys.path.insert(0, str(BASE_DIR))
+
 load_dotenv(BASE_DIR / ".env")
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
+
+# Import docker wrapper at module level so tests can patch app.docker_wrapper.
+# Import errors are tolerated here; run_compose_command will raise
+# FileNotFoundError if docker is missing at runtime.
+try:
+    import docker_wrapper  # type: ignore
+except Exception:
+    docker_wrapper = None
 
 
 def load_servers():
     with CONFIG_PATH.open("r", encoding="utf-8") as handle:
         servers = json.load(handle)
+
+    # Normalize inventory so each entry has the exact service name that
+    # appears in its compose file. This keeps the config forgiving while
+    # ensuring runtime behavior uses the canonical service identifier.
+    for server in servers:
+        try:
+            resolved = resolve_service_name(server)
+        except Exception:
+            # If anything goes wrong while resolving, leave configured value
+            # untouched and let runtime checks handle missing compose files.
+            resolved = server.get("service_name")
+        if resolved:
+            server["service_name"] = resolved
+
     return servers
 
 
@@ -93,6 +118,17 @@ def run_compose_command(server, *args):
     if not compose_file:
         raise ValueError("No compose project configured")
 
+    # Validate docker/compose availability before attempting to run commands.
+    if docker_wrapper is None:
+        raise FileNotFoundError("Docker wrapper unavailable")
+
+    try:
+        docker_wrapper.ensure_docker_available()
+    except FileNotFoundError:
+        # Surface the missing tool as a FileNotFoundError so callers/tests
+        # can handle it consistently.
+        raise
+
     command = ["docker", "compose", "-f", str(compose_file), *args]
     return subprocess.run(
         command,
@@ -109,10 +145,32 @@ def get_server_status(server):
     except (ValueError, FileNotFoundError):
         return "unknown"
 
-    output = f"{result.stdout}\n{result.stderr}".lower()
-    if re.search(r"\b(up|running|healthy)\b", output):
+    output = f"{result.stdout}\n{result.stderr}"
+
+    # Attempt to parse the table output from `docker compose ps`. The output
+    # typically has a NAME and STATUS column; split on two-or-more spaces to
+    # get columns reliably even when service names or statuses contain spaces.
+    for line in output.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        # Skip header lines that contain NAME and STATUS
+        if re.search(r"^NAME\s+STATUS", line, flags=re.IGNORECASE):
+            continue
+
+        cols = re.split(r"\s{2,}", line)
+        if len(cols) >= 2:
+            status_col = cols[1].lower()
+            if "healthy" in status_col or status_col.startswith("up") or "running" in status_col:
+                return "running"
+            if "exited" in status_col or status_col.startswith("exit") or "dead" in status_col or "stopped" in status_col:
+                return "stopped"
+
+    # Fallback: search the combined output for known tokens
+    lowered = output.lower()
+    if re.search(r"\b(up|running|healthy)\b", lowered):
         return "running"
-    if re.search(r"\b(exited|stopped|dead|created|restarting)\b", output):
+    if re.search(r"\b(exited|stopped|dead|created|restarting)\b", lowered):
         return "stopped"
     return "unknown"
 

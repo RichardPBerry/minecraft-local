@@ -13,6 +13,12 @@ app = app_module.app
 
 class FlaskAppTests(unittest.TestCase):
     def setUp(self):
+        # Prevent availability checks from failing in test environments by
+        # stubbing out the docker availability check.
+        self.ensure_patcher = patch("app.app.docker_wrapper.ensure_docker_available")
+        self.mock_ensure = self.ensure_patcher.start()
+        self.addCleanup(self.ensure_patcher.stop)
+
         self.client = app.test_client()
 
     @patch("app.app.subprocess.run")

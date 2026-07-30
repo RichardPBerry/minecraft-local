@@ -87,7 +87,7 @@ minecraft-local/
 - Keep the implementation focused on the current compose workflow
 - For future expansion, support multiple compose files or projects
 
-### 5. Add basic security
+### 5. (OPTIONAL) Add basic security
 - Bind the Flask app to 0.0.0.0 only if needed for LAN access
 - Prefer binding to 127.0.0.1 by default
 - Add simple authentication via environment variables:

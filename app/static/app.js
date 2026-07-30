@@ -14,6 +14,24 @@ function createStatusBadge(status) {
   return badge;
 }
 
+async function requestJson(url, options = {}) {
+  const response = await fetch(url, options);
+  const text = await response.text();
+
+  let payload = null;
+  try {
+    payload = text ? JSON.parse(text) : null;
+  } catch (error) {
+    throw new Error(`Server returned an unexpected response (${response.status} ${response.statusText}).`);
+  }
+
+  if (!response.ok) {
+    throw new Error(payload?.message || `Request failed (${response.status} ${response.statusText}).`);
+  }
+
+  return payload;
+}
+
 function renderServers(servers) {
   list.innerHTML = '';
 
@@ -62,8 +80,7 @@ function renderServers(servers) {
 
 async function loadServers() {
   try {
-    const response = await fetch('/api/servers');
-    const servers = await response.json();
+    const servers = await requestJson('/api/servers');
     renderServers(servers);
   } catch (error) {
     setResult(`Unable to load servers: ${error.message}`, 'error');
@@ -71,16 +88,19 @@ async function loadServers() {
 }
 
 async function toggleServer(serverId, action) {
-  const response = await fetch(`/api/${action}/${serverId}`, { method: 'POST' });
-  const payload = await response.json();
+  try {
+    const payload = await requestJson(`/api/${action}/${serverId}`, { method: 'POST' });
 
-  if (payload.success) {
-    setResult(payload.message, 'success');
-  } else {
-    setResult(payload.message, 'error');
+    if (payload.success) {
+      setResult(payload.message, 'success');
+    } else {
+      setResult(payload.message, 'error');
+    }
+
+    await loadServers();
+  } catch (error) {
+    setResult(`Action failed: ${error.message}`, 'error');
   }
-
-  await loadServers();
 }
 
 refreshButton.addEventListener('click', () => {

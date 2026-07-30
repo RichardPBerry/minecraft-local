@@ -12,12 +12,12 @@ services:
       EULA: "TRUE"
       MEMORY: "8G"                             # 2048M is too low for this modpack
       USE_MEOWICE_FLAGS: "TRUE"                 # Use Meowice's flags for better performance (recommended)
-      OPS_FILE: /configuration/ops-list.json    # List of users to granted OP status
-      EXISTING_OPS_FILE: "SYNCHRONIZE"          # Synchronize in-game ops with the container's ops.json file
+      OPS_FILE: /configuration/ops-list.json              # List of users to granted OP status
+      EXISTING_OPS_FILE: "SYNCHRONIZE"                    # Synchronize in-game ops with the container's ops.json file
 
       # World settings
       LEVEL: "survival_world"                     # Name of the world folder
-      MOTD: "Welcome to FortuneCooky's minecraft server...of DOOOOMM!"
+      MOTD: "Welcome to FortuneCooky's minecraft server...of MODSS!"
       DIFFICULTY: "normal"            # peaceful, easy, normal, hard
       #SEED: -7775094310068025774     # Grand canyon
       SEED: -281032838528851848       # The forever world
@@ -33,6 +33,6 @@ services:
 
     volumes:
       - ./data:/data
-      - ../configuration:/configuration:ro
+      - ../configuration-shared:/configuration:ro
       # - ./mods:/mods-common:ro
       # - ./plugins:/plugins-common:ro
