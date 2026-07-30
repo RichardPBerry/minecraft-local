@@ -1,0 +1,30 @@
+services:
+  survival-server-001:
+    image: itzg/minecraft-server:latest
+    pull_policy: daily
+    tty: true
+    stdin_open: true
+    ports:
+      - "25565:25565" # Minecraft server port
+
+    environment:
+      # System settings
+      EULA: "TRUE"
+      MEMORY: "2048M"                                     # 2048M is fine for vanilla
+      USE_MEOWICE_FLAGS: "TRUE"                           # Use Meowice's flags for better performance (recommended)
+      OPS_FILE: /configuration/ops-list.json              # List of users to granted OP status
+      EXISTING_OPS_FILE: "SYNCHRONIZE"                    # Synchronize in-game ops with the container's ops.json file
+
+      # World settings
+      LEVEL: "survival_world"                     # Name of the world folder
+      MOTD: "Welcome to FortuneCooky's minecraft server...of DOOOOMM!"
+      DIFFICULTY: "normal"            # peaceful, easy, normal, hard
+      #SEED: -7775094310068025774     # Grand canyon
+      SEED: -281032838528851848       # The forever world
+      MODE: "survival"                # creative, survival, adventure, spectator
+
+    volumes:
+      - ./data:/data
+      - ../configuration-shared:/configuration:ro
+      # - ./mods:/mods-common:ro
+      # - ./plugins:/plugins-common:ro

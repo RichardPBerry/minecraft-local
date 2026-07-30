@@ -1,3 +1,5 @@
 *.code-workspace
-configuration/
+configuration-shared/
 data/
+app/.env
+__pycache__/

@@ -19,8 +19,8 @@ This document outlines a practical implementation plan for a lightweight Flask w
 ## Project structure
 ```text
 minecraft-local/
-    
     implementation-plan.md
+    README.md
     app/
         app.py
         requirements.txt
@@ -36,12 +36,15 @@ minecraft-local/
         configuration/
             ops-list.json
             rcon-password.txt
-        survival-vanilla-001/
+        001-survival-vanilla/
             compose.yaml
-        creative-vanilla-002/
+            data/
+        002-creative-vanilla/
             compose.yaml
-        survival-aitm10-003/
+            data/
+        003-survival-aitm10/
             compose.yaml
+            data/
 ```
 
 ## Implementation steps
@@ -139,6 +142,27 @@ def api_status(server_id):
 - Use a firewall or reverse proxy if you want LAN access beyond a trusted network
 - Consider adding HTTPS later if the panel will be used outside a private network
 - Avoid running the app as root
+
+## Service account and runtime isolation
+- Run the web app under a dedicated service account rather than as root.
+- Recommended setup:
+  - Create a dedicated user such as `minecraft-local`
+  - Give it a non-login shell such as `/usr/sbin/nologin` if it does not need interactive access
+  - Store the app under a protected directory such as `/opt/minecraft-local` or `/srv/minecraft-local`
+- Set ownership of the app directory, templates, and configuration files to that service account.
+- Keep secrets in a protected environment file or a systemd environment file owned by the service account.
+- If the app needs Docker access, grant the service account access through a dedicated Docker group or a rootless Docker setup rather than running the app as root.
+- Keep permissions narrow and avoid sharing the service account with unrelated processes.
+
+## Optional: auto-start on system boot
+- If the control panel should come up automatically after reboot, add a systemd service unit.
+- Typical implementation steps:
+  - Create a unit file such as `/etc/systemd/system/minecraft-local-web.service`
+  - Configure `User=minecraft-local`, `WorkingDirectory=/opt/minecraft-local`, and `ExecStart` to launch the Flask app with a production WSGI server such as Gunicorn
+  - Load the environment file from the service account's config directory
+  - Enable it with `sudo systemctl enable --now minecraft-local-web.service`
+- This is optional for initial setup; the app can be started manually while validating the first deployment.
+- If the app will be reached from other devices on the LAN, a reverse proxy such as Nginx can be added later for better control and security.
 
 ## Rollout plan
 1. Create the Flask app structure and configuration files

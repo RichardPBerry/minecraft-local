@@ -17,16 +17,47 @@ On linux servers you will also need to allow the application via `ufw`. This can
 
 ```
 cat /etc/ufw/applications.d/minecraft 
-[Minecraft Server]
-title=Minecraft Server
+[Minecraft Servers]
+title=Minecraft Servers
 description=Minecraft Game Server and RCON
 ports=25565:25570/tcp|25565:25570/udp|25575/tcp
 ```
+The add this as a firewall rule:
+```
+sudo ufw allow from 192.168.0.0/16 to any app "Minecraft Servers"
+```
+
+Your will need to do the same for the Minecraft Control Panel
 
 # Running
-1. Simply run: `sudo docker compose up -d`
+1. Start the Minecraft container from the server directory:
+   `cd servers/001-survival-vanilla && sudo docker compose up -d`
 2. 
 
+# Running the web app
+The repository also includes a lightweight Flask-based control panel for the local server.
+
+## Prerequisites
+- Python 3.10+
+- `pip` installed
+
+## Quick start
+```bash
+cd app
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp ./app/.env.example ./app/.env
+python app/app.py --debug           # NOTE: Do not use debug when running for realsie!
+```
+
+To stop a running app: `pkill -f 'python app/app.py'`
+
+By default the app will start on `http://127.0.0.1:5000/`.
+
+## Notes
+- Update the values in `.env` before using the app in a shared or LAN environment.
+- The app is intended for local use and should not be exposed publicly without additional security controls.
 
 # Seed values
 #SEED: -7775094310068025774    # Grand canyon

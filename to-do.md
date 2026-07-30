@@ -2,11 +2,12 @@
 - Get ops-list.json working - currently not recognising FortuneCooky as Op - DONE
 - Check rcon commands working - REMOVE
 - Get good seed value - DONE
-- Checkout data packs / recources etc - remove
+- Checkout data packs / recources etc - Sorta done
 
 
 # Next
 - Auto starting and cleanup
+- 
 
 # Creative mode world
 - Make an additional world for creative mode

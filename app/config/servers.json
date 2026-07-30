@@ -1,0 +1,26 @@
+[
+  {
+    "id": "001-survival-vanilla",
+    "name": "001 Survival Vanilla",
+    "compose_project": "servers/001-survival-vanilla",
+    "service_name": "001-survival-vanilla",
+    "description": "Main local survival server",
+    "port": 25565
+  },
+  {
+    "id": "002-creative-vanilla",
+    "name": "002 Creative Vanilla",
+    "compose_project": "servers/002-creative-vanilla",
+    "service_name": "survival-server-001",
+    "description": "Creative vanilla server",
+    "port": 25566
+  },
+  {
+    "id": "003-survival-atm10",
+    "name": "003 Survival ATM10",
+    "compose_project": "servers/003-survival-atm10",
+    "service_name": "survival-server-001",
+    "description": "All the Mods 10 survival server",
+    "port": 25567
+  }
+]

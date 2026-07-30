@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Minecraft Local Control Panel</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <main>
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Local control panel</p>
+            <h1>Minecraft Local Control Panel</h1>
+          </div>
+          <button id="refresh-button" type="button">Refresh</button>
+        </div>
+        <p class="intro">Start or stop your local Minecraft servers directly from this lightweight dashboard.</p>
+        <div id="result" class="result" aria-live="polite"></div>
+        <ul id="server-list" class="server-list"></ul>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
