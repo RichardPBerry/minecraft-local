@@ -3,3 +3,4 @@ configuration-shared/
 data/
 app/.env
 __pycache__/
+to-do.md
