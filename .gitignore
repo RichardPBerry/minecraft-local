@@ -6,3 +6,4 @@ app/.env
 .venv/
 __pycache__/
 to-do.md
+implementation-plan.md

@@ -124,15 +124,17 @@ copy_example_if_missing() {
     fi
 
     echo "Creating $dst from $(basename "$src")..."
-    cp "$src" "$dst"
-    chown mcservice:mcservice "$dst"
+    install -o mcservice -g mcservice -m 0600 "$src" "$dst"
 }
 
 mkdir -p "$APP_DIR/servers/configuration-shared"
+chown -R mcservice:mcservice "$APP_DIR"
+
 copy_example_if_missing "$APP_DIR/app/.env.example" "$APP_DIR/app/.env"
 copy_example_if_missing "$APP_DIR/servers/configuration-shared/ops-list.json.example" "$APP_DIR/servers/configuration-shared/ops-list.json"
 copy_example_if_missing "$APP_DIR/servers/configuration-shared/rcon-password.txt.example" "$APP_DIR/servers/configuration-shared/rcon-password.txt"
 
+chown -R mcservice:mcservice "$APP_DIR"
 echo "Configuration files were created from examples. Update the values in app/.env, servers/configuration-shared/ops-list.json, and servers/configuration-shared/rcon-password.txt before running the app."
 
 # Parse flags
