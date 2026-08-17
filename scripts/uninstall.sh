@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Uninstall script for minecraft-local
-# - Stops, disables and removes systemd service and timer units
+# - Stops, disables and removes the systemd service unit
 # - Removes application files from /var/www/minecraft-local
 # - Optionally removes the 'mcservice' system user
 #
@@ -15,9 +15,7 @@ set -euo pipefail
 
 APP_DIR="/var/www/minecraft-local"
 SERVICE_UNIT="/etc/systemd/system/minecraft-local.service"
-TIMER_UNIT="/etc/systemd/system/minecraft-local.timer"
 SERVICE_NAME="minecraft-local.service"
-TIMER_NAME="minecraft-local.timer"
 REMOVE_USER=false
 ASSUME_YES=false
 
@@ -66,7 +64,7 @@ stop_and_remove_unit() {
       rm -f "$unit_path"
     fi
 
-    # For timers, also try to remove the timer unit file location if different
+    # Also try to remove any unit file under /lib/systemd/system if present
     if [ -f "/lib/systemd/system/$unit_name" ]; then
       rm -f "/lib/systemd/system/$unit_name"
     fi
@@ -80,16 +78,6 @@ stop_and_remove_unit() {
   fi
 }
 
-# Stop and remove timer first (it may trigger service)
-if [ -f "$TIMER_UNIT" ] || systemctl list-unit-files | awk '{print $1}' | grep -qx "$TIMER_NAME"; then
-  if confirm "Remove systemd timer $TIMER_NAME?"; then
-    stop_and_remove_unit "$TIMER_UNIT" "$TIMER_NAME"
-  else
-    echo "Skipping removal of $TIMER_NAME"
-  fi
-else
-  echo "No systemd timer $TIMER_NAME found."
-fi
 
 # Stop and remove service
 if [ -f "$SERVICE_UNIT" ] || systemctl list-unit-files | awk '{print $1}' | grep -qx "$SERVICE_NAME"; then
