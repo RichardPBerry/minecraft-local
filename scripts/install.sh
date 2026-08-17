@@ -130,7 +130,7 @@ copy_example_if_missing() {
 
 mkdir -p "$APP_DIR/servers/configuration-shared"
 copy_example_if_missing "$APP_DIR/app/.env.example" "$APP_DIR/app/.env"
-copy_example_if_missing "$APP_DIR/servers/configuration-shared/ops-list copy.example" "$APP_DIR/servers/configuration-shared/ops-list.json"
+copy_example_if_missing "$APP_DIR/servers/configuration-shared/ops-list.json.example" "$APP_DIR/servers/configuration-shared/ops-list.json"
 copy_example_if_missing "$APP_DIR/servers/configuration-shared/rcon-password.txt.example" "$APP_DIR/servers/configuration-shared/rcon-password.txt"
 
 echo "Configuration files were created from examples. Update the values in app/.env, servers/configuration-shared/ops-list.json, and servers/configuration-shared/rcon-password.txt before running the app."

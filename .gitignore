@@ -1,5 +1,6 @@
 *.code-workspace
-configuration-shared/
+servers/configuration-shared/ops-list.json
+servers/configuration-shared/rcon-password.txt
 data/
 app/.env
 .venv/
