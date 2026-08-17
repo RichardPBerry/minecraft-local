@@ -1,11 +1,12 @@
 # Overview
-This repository provides a lightweight Flask-based control panel and  docker environment for running multiple minecraft servers. The web app provides a simply control panel for starting & stopping docker servers.
+This repository provides a lightweight Flask-based control panel and  docker environment for running multiple minecraft servers. The web app provides a simply control panel for starting & stopping docker servers. Docker servers are based on [docker-minecraft-server](https://github.com/itzg/docker-minecraft-server/tree/master).
 
-Docker servers are based on [docker-minecraft-server](https://github.com/itzg/docker-minecraft-server/tree/master).
+Note that **the app is intended for use on a local network only** and should not be exposed publicly without additional security controls.
 
 ![Screenshot of Minecraft Local Control Panel](assets/minecraft_control_panel.png)
 
 # Pre-requisities
+This project needs the following:
 1. Docker installed. These instructions are for an Ubuntu host.
    - Add the official [docker apt repository](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
    - Install the required packages: `sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin`
@@ -13,11 +14,10 @@ Docker servers are based on [docker-minecraft-server](https://github.com/itzg/do
    - (Optional). Configure docker to run in [rootless mode](https://docs.docker.com/engine/security/rootless/)
 2. Python 3.10+ installed.
 3. `pip` installed.
-4. The app is intended for local use and should not be exposed publicly without additional security controls.
 
 
 # Installing
-
+To install:
 1. Fork the repo.
 2. Clone your forked repo somewhere locally that you can work on.
 3. (OPTIONAL) Update the minecraft server configuation files under the `servers/` directory. The repo comes with some example servers, but you can add/remove or modify the folders and `compose.yaml` files to create your own.
@@ -65,10 +65,9 @@ If you installed with the `--install-service` option the web app should already 
 Check the status of the service with `sudo systemctl status minecraft-local.service`.
 Check the logs with `sudo journalctl -u minecraft-local.service`. 
 
-## Manually run the web app as a standar user account
+## Manually run the web app as a standard user account
 Run the app as the current account from project root.
-```
-
+```bash
 usermod -aG docker [username]                # Allow [username] to run docker contains. Required first time only.
 python -m venv .venv                         # Required first time only
 source .venv/bin/activate                    # Activate python virtual environment
@@ -82,18 +81,14 @@ Run the app as the service account. Update directory paths if these were changed
 sudo -u mcservice sh -c 'cd /var/www/minecraft-local && /var/www/minecraft-local/.venv/bin/python app/app.py'
 ```
 
-## Manually starting a single minecraft server
-```
-git clone https://github.com/RichardPBerry/minecraft-local
-cd servers/001-survival-vanilla && sudo docker compose up -d
-```
-
 
 # Updating
 Run `sudo ./scripts/update.sh` to update. If you altereted the application install paths you will also need to update the path in this script.
 
+
 # Uninstall
 Run `sudo ./scripts/uninstall.sh` to uninstall. If you altereted the application install paths you will also need to update the path in this script.
+
 
 # References:
 - [Docker Installing docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
