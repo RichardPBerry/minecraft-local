@@ -124,7 +124,16 @@ copy_example_if_missing() {
     fi
 
     echo "Creating $dst from $(basename "$src")..."
-    install -o mcservice -g mcservice -m 0600 "$src" "$dst"
+
+    # Preserve the permission bits from the example file when creating the destination.
+    # Fall back to 0600 if stat fails for any reason.
+    if mode=$(stat -c '%a' -- "$src" 2>/dev/null); then
+        : # mode is set
+    else
+        mode=600
+    fi
+
+    install -o mcservice -g mcservice -m "$mode" "$src" "$dst"
 }
 
 mkdir -p "$APP_DIR/servers/configuration-shared"
