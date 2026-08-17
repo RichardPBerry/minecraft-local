@@ -1,108 +1,91 @@
 # Overview
-This repository provides a docker environment for running a minecraft server. It is built from [GitHub: docker-minecraft-server](https://github.com/itzg/docker-minecraft-server/tree/master)
+This repository provides a lightweight Flask-based control panel and  docker environment for running multiple minecraft servers. The web app provides a simply control panel for starting & stopping docker servers.
+
+Docker servers are based on [docker-minecraft-server](https://github.com/itzg/docker-minecraft-server/tree/master).
 
 # Pre-requisities
-Docker must be installed. These instructions are for an Ubuntu host
-1. Add the official [docker apt repository](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
-2. Install the required packages: `sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin`
-3. Confirm docker is running `sudo systemctl status docker`
-4. (Optional). Configure docker to run in [rootless mode](https://docs.docker.com/engine/security/rootless/)
+1. Docker installed. These instructions are for an Ubuntu host
+   - Add the official [docker apt repository](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
+   - Install the required packages: `sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin`
+   - Confirm docker is running `sudo systemctl status docker`
+   - (Optional). Configure docker to run in [rootless mode](https://docs.docker.com/engine/security/rootless/)
+2. Python 3.10+ installed.
+3. `pip` installed.
+4. The app is intended for local use and should not be exposed publicly without additional security controls.
 
 
-# Configuration
-See [supmc.com](https://setupmc.com/java-server/) for a super handy guide in setting up the compose file!
+# Installing
 
+1. Fork the repo
+2. Clone your forked repo somewhere locally that you can work on
+3. Update the minecraft servers under the `servers/` directory. The repo comes with some example servers, but you can add/remove or modify the folders and `compose.yaml` files to create your own.
+4. Commit your changes to your forked repo.
+4. Run the install script under `scripts/install.sh`. This script creates a system user (mcservice), clones the repository, and prepares the app directory. By default, the app and server are installed under `/var/www/minecraft-local` (this can be changed in the APP_DIR variable in the install script).
+   - `sudo ./scripts/install.sh --install-service` - Creates the directory structure, clones the repository and configures the web application to run as a systemd service that restarts on system boot (RECOMMENDED)
+   - `sudo ./scripts/install.sh` - Creates the application directory structure and clones the reposotiry. Web app needs to be manually started (no service).
+5. (OPTIONAL) Update environment settings. The install script creates example configuration files if they are missing, but they should be reviewed and updated before first use. In particular, set the runtime values in `app/.env`, update the OP list in `servers/configuration-shared/ops-list.json`, and set the RCON password in `servers/configuration-shared/rcon-password.txt`.
 
-
-# Service account
-To run the app and docker compose as a non-interactive service account, create a system user (example: `mcservice`), add it to the docker group, and optionally give ownership of the repository or server folders:
-
-```bash
-# create a system user without a home directory and prevent user login
-sudo useradd --system --shell /usr/sbin/nologin mcservice
-
-# add the user to the docker group so it can run docker commands
-sudo usermod -aG docker mcservice
-
-# (Optional) change ownership of the project or servers directory to the service account:
-# Replace /path/to/project with the absolute path to this repository or your servers folder
-sudo chown -R mcservice:mcservice /path/to/project
-
-# Switch to the service account and start docker compose (example)
-sudo -u mcservice -H bash -c 'cd /path/to/project/servers/001-survival-vanilla && docker compose up -d'
-```
-
-For long-running management, consider creating a systemd service that runs docker compose or the Flask app under this user. Ensure the service account has only the permissions it needs and do not enable shell login unless required.
 
 # Firewall
-On linux servers you will also need to allow the application via `ufw`. This can be done by creating a profile under the following path: `/etc/ufw/applications.d/`. For example:
+The app is intended to run on a trusted network environment only. You may need to create firewall rules to allow incoming traffic from your local network.
 
-```
-cat /etc/ufw/applications.d/minecraft 
+## Linux using ufw
+Allowing via `ufw` This can be done by creating two profiles under path: `/etc/ufw/applications.d/`.
+
+```bash
+cat /etc/ufw/applications.d/minecraft_servers
 [Minecraft Servers]
 title=Minecraft Servers
 description=Minecraft Game Server and RCON
 ports=25565:25570/tcp|25565:25570/udp|25575/tcp
 ```
-The add this as a firewall rule:
-```
-sudo ufw allow from 192.168.0.0/16 to any app "Minecraft Servers"
-```
-
-Your will need to do the same for the Minecraft Control Panel
-
-# Running
-1. Start the Minecraft container from the server directory:
-   `cd servers/001-survival-vanilla && sudo docker compose up -d`
-
-Service account
-To run the app and docker compose as a non-interactive service account, create a system user (example: `mcservice`), add it to the docker group, and optionally give ownership of the repository or server folders:
 
 ```bash
-# create a system user with a home directory
-sudo useradd --system --create-home --shell /bin/bash mcservice
-
-# add the user to the docker group so it can run docker commands
-sudo usermod -aG docker mcservice
-
-# (Optional) change ownership of the project or servers directory to the service account:
-# Replace /path/to/project with the absolute path to this repository or your servers folder
-sudo chown -R mcservice:mcservice /path/to/project
-
-# Switch to the service account and start docker compose (example)
-sudo -u mcservice -H bash -c 'cd /path/to/project/servers/001-survival-vanilla && docker compose up -d'
+cat /etc/ufw/applications.d/minecraft_cp
+[Minecraft Control Panel]
+title=Minecraft Server
+description=Minecraft container control panel
+ports=5000/tcp
 ```
 
-For long-running management, consider creating a systemd service that runs docker compose or the Flask app under this user. Ensure the service account has only the permissions it needs and do not enable shell login unless required.
+Them add these profiles as firewall rules:
+```bash
+sudo ufw allow from 192.168.0.0/16 to any app "Minecraft Servers"
+sudo ufw allow from 192.168.0.0/16 to any app "Minecraft Control Panel"
+```
+
 
 # Running the web app
-The repository also includes a lightweight Flask-based control panel for the local server.
+The app honors `FLASK_HOST`, `FLASK_PORT`, and `FLASK_DEBUG` environment variables. By default the app will be listining on all network interfaces on port 5000.
 
-## Prerequisites
-- Python 3.10+
-- `pip` installed
+## Run the web app as a Systemd service
+If you installed with the `--install-service` option the web app should already be running. Open a browser and point to the ip of your server on port 5000, e.g. `http://127.0.0.0:5000` from the server itself.
+Check the status of the service with `sudo systemctl status minecraft-local.service`.
+Check the logs with `sudo journalctl -u minecraft-local.service`. 
 
-## Quick start
-```bash
-cd app
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp ./app/.env.example ./app/.env
-python app/app.py --debug           # NOTE: Do not use debug when running for realsie!
+## Manually run the web app as a standar user account
+Run the app as the current account from project root.
 ```
 
-To stop a running app: `pkill -f 'python app/app.py'`
+usermod -aG docker [username]                # Allow [username] to run docker contains. Required first time only.
+python -m venv .venv                         # Required first time only
+source .venv/bin/activate                    # Activate python virtual environment
+pip install -r requirements.txt              # Install required python libraries. Required first time only.
+python app/app.py                            # Start the flask app.
+```
 
-By default the app will start on `http://127.0.0.1:5000/`.
+## Manually run the web app as service account
+Run the app as the service account. Update directory paths if these were changed.
+```bash
+sudo -u mcservice sh -c 'cd /var/www/minecraft-local && /var/www/minecraft-local/.venv/bin/python app/app.py'
+```
 
-## Notes
-- Update the values in `.env` before using the app in a shared or LAN environment.
-- The app is intended for local use and should not be exposed publicly without additional security controls.
+## Manually starting a single minecraft server
+```
+git clone https://github.com/RichardPBerry/minecraft-local
+cd servers/001-survival-vanilla && sudo docker compose up -d
+```
 
-# Seed values
-#SEED: -7775094310068025774    # Grand canyon
-SEED: -281032838528851848      # The forever world
 
 # References:
 - [Docker Installing docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)

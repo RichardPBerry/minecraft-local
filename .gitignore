@@ -2,5 +2,6 @@
 configuration-shared/
 data/
 app/.env
+.venv/
 __pycache__/
-to-do.mdto-do.md
+to-do.md

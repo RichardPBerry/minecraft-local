@@ -1,5 +1,5 @@
 services:
-  survival-server-001:
+  003-survival-aitm10:
     image: itzg/minecraft-server:latest
     pull_policy: daily
     tty: true

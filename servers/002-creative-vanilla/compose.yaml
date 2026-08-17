@@ -1,5 +1,5 @@
 services:
-  survival-server-001:
+  002-creative-vanilla:
     image: itzg/minecraft-server:latest
     pull_policy: daily
     tty: true

@@ -27,18 +27,54 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi 
 
-# Create the service account if does not exist
+# Ensure required commands are available
+for cmd in git python3; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo "Required command '$cmd' is not installed or not in PATH." >&2
+        exit 1
+    fi
+done
+
+docker_available=false
+if command -v docker >/dev/null 2>&1; then
+    docker_available=true
+fi
+
+if [ "$docker_available" = false ]; then
+    echo "Warning: Docker is not installed or not in PATH. This app relies on Docker Compose to manage Minecraft servers." >&2
+fi
+
+# Create the service account if it does not exist
 if ! id "mcservice" &>/dev/null; then
     echo "Creating service account 'mcservice'..."
-    sudo useradd --system --shell /usr/sbin/nologin mcservice
-    sudo usermod -aG docker mcservice
+    useradd --system --shell /usr/sbin/nologin mcservice
+    usermod -aG docker mcservice
 fi
+
+# Ensure mcservice is a member of the docker group when the group exists.
+# This is idempotent and handles the case where Docker (and its group) is
+# installed after this script was first run.
+if getent group docker >/dev/null 2>&1; then
+    if id -nG mcservice 2>/dev/null | grep -qw docker; then
+        echo "User 'mcservice' is already a member of the 'docker' group"
+    else
+        echo "Adding 'mcservice' to 'docker' group..."
+        if usermod -aG docker mcservice; then
+            echo "Added 'mcservice' to 'docker' group"
+        else
+            echo "Warning: failed to add 'mcservice' to 'docker' group" >&2
+        fi
+    fi
+else
+    echo "Note: 'docker' group not present; skipping adding 'mcservice' to docker group"
+fi
+
 
 # Create the application directory if it does not exist
 if [ ! -d "$APP_DIR" ]; then
     echo "Creating application directory at $APP_DIR..."
-    sudo mkdir -p "$APP_DIR"
-    sudo chown mcservice:mcservice "$APP_DIR"
+    mkdir -p "$APP_DIR"
+    chown mcservice:mcservice "$APP_DIR"
 fi
 
 # Clone the repository into APP_DIR if not already present
@@ -57,6 +93,47 @@ else
         sudo chown -R mcservice:mcservice "$APP_DIR"
     fi
 fi
+
+VENV_PATH="$APP_DIR/.venv"
+REQUIREMENTS_PATH="$APP_DIR/requirements.txt"
+
+if [ ! -d "$VENV_PATH" ]; then
+    echo "Creating Python virtual environment at $VENV_PATH..."
+    sudo -u mcservice python3 -m venv "$VENV_PATH" || { echo "Failed to create virtual environment" >&2; exit 1; }
+    sudo chown -R mcservice:mcservice "$VENV_PATH"
+fi
+
+if [ -f "$REQUIREMENTS_PATH" ]; then
+    echo "Installing Python dependencies from $REQUIREMENTS_PATH..."
+    sudo -u mcservice "$VENV_PATH/bin/python" -m pip install --upgrade pip
+    sudo -u mcservice "$VENV_PATH/bin/python" -m pip install -r "$REQUIREMENTS_PATH" || { echo "pip install failed" >&2; exit 1; }
+fi
+
+copy_example_if_missing() {
+    local src="$1"
+    local dst="$2"
+
+    if [ ! -f "$src" ]; then
+        echo "Example file not found: $src" >&2
+        return 0
+    fi
+
+    if [ -e "$dst" ]; then
+        echo "Keeping existing configuration at $dst"
+        return 0
+    fi
+
+    echo "Creating $dst from $(basename "$src")..."
+    cp "$src" "$dst"
+    chown mcservice:mcservice "$dst"
+}
+
+mkdir -p "$APP_DIR/servers/configuration-shared"
+copy_example_if_missing "$APP_DIR/app/.env.example" "$APP_DIR/app/.env"
+copy_example_if_missing "$APP_DIR/servers/configuration-shared/ops-list copy.example" "$APP_DIR/servers/configuration-shared/ops-list.json"
+copy_example_if_missing "$APP_DIR/servers/configuration-shared/rcon-password.txt.example" "$APP_DIR/servers/configuration-shared/rcon-password.txt"
+
+echo "Configuration files were created from examples. Update the values in app/.env, servers/configuration-shared/ops-list.json, and servers/configuration-shared/rcon-password.txt before running the app."
 
 # Parse flags
 INSTALL_SERVICE=false
@@ -86,11 +163,11 @@ After=network.target
 Type=simple
 User=mcservice
 Group=mcservice
-WorkingDirectory=/var/www/minecraft-local
+WorkingDirectory=/var/www/minecraft-local/app
 # Override FLASK_HOST/FLASK_PORT via environment if desired
 Environment=FLASK_HOST=0.0.0.0
 Environment=FLASK_PORT=5000
-ExecStart=/usr/bin/env python3 /var/www/minecraft-local/app/app.py
+ExecStart=/var/www/minecraft-local/.venv/bin/python /var/www/minecraft-local/app/app.py
 Restart=on-failure
 RestartSec=5
 

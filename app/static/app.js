@@ -49,7 +49,14 @@ function renderServers(servers) {
 
     const title = document.createElement('div');
     title.className = 'server-title';
-    title.innerHTML = `<strong>${server.name}</strong><span>${server.description || ''}</span>`;
+
+    const name = document.createElement('strong');
+    name.textContent = server.name;
+    title.appendChild(name);
+
+    const description = document.createElement('span');
+    description.textContent = server.description || '';
+    title.appendChild(description);
 
     const meta = document.createElement('div');
     meta.className = 'server-meta';
