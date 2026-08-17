@@ -3,8 +3,10 @@ This repository provides a lightweight Flask-based control panel and  docker env
 
 Docker servers are based on [docker-minecraft-server](https://github.com/itzg/docker-minecraft-server/tree/master).
 
+![Screenshot of Minecraft Local Control Panel](assets/minecraft_control_panel.png)
+
 # Pre-requisities
-1. Docker installed. These instructions are for an Ubuntu host
+1. Docker installed. These instructions are for an Ubuntu host.
    - Add the official [docker apt repository](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
    - Install the required packages: `sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin`
    - Confirm docker is running `sudo systemctl status docker`
@@ -16,11 +18,11 @@ Docker servers are based on [docker-minecraft-server](https://github.com/itzg/do
 
 # Installing
 
-1. Fork the repo
-2. Clone your forked repo somewhere locally that you can work on
-3. Update the minecraft servers under the `servers/` directory. The repo comes with some example servers, but you can add/remove or modify the folders and `compose.yaml` files to create your own.
+1. Fork the repo.
+2. Clone your forked repo somewhere locally that you can work on.
+3. (OPTIONAL) Update the minecraft server configuation files under the `servers/` directory. The repo comes with some example servers, but you can add/remove or modify the folders and `compose.yaml` files to create your own.
 4. Commit your changes to your forked repo.
-4. Run the install script under `scripts/install.sh`. This script creates a system user (mcservice), clones the repository, and prepares the app directory. By default, the app and server are installed under `/var/www/minecraft-local` (this can be changed in the APP_DIR variable in the install script).
+4. Run the install script under `scripts/install.sh`. This script creates a system user (`mcservice`), clones the repository, and prepares the app directory. By default, the app and server are installed under `/var/www/minecraft-local` (this can be changed in the APP_DIR variable in the install script).
    - `sudo ./scripts/install.sh --install-service` - Creates the directory structure, clones the repository and configures the web application to run as a systemd service that restarts on system boot (RECOMMENDED)
    - `sudo ./scripts/install.sh` - Creates the application directory structure and clones the reposotiry. Web app needs to be manually started (no service).
 5. (OPTIONAL) Update environment settings. The install script creates example configuration files if they are missing, but they should be reviewed and updated before first use. In particular, set the runtime values in `app/.env`, update the OP list in `servers/configuration-shared/ops-list.json`, and set the RCON password in `servers/configuration-shared/rcon-password.txt`.
@@ -59,7 +61,7 @@ sudo ufw allow from 192.168.0.0/16 to any app "Minecraft Control Panel"
 The app honors `FLASK_HOST`, `FLASK_PORT`, and `FLASK_DEBUG` environment variables. By default the app will be listining on all network interfaces on port 5000.
 
 ## Run the web app as a Systemd service
-If you installed with the `--install-service` option the web app should already be running. Open a browser and point to the ip of your server on port 5000, e.g. `http://127.0.0.0:5000` from the server itself.
+If you installed with the `--install-service` option the web app should already be running. Open a browser and point to the ip of your server on port 5000, e.g. `http://127.0.0.0:5000`.
 Check the status of the service with `sudo systemctl status minecraft-local.service`.
 Check the logs with `sudo journalctl -u minecraft-local.service`. 
 
@@ -86,6 +88,12 @@ git clone https://github.com/RichardPBerry/minecraft-local
 cd servers/001-survival-vanilla && sudo docker compose up -d
 ```
 
+
+# Updating
+Run `sudo ./scripts/update.sh` to update. If you altereted the application install paths you will also need to update the path in this script.
+
+# Uninstall
+Run `sudo ./scripts/uninstall.sh` to uninstall. If you altereted the application install paths you will also need to update the path in this script.
 
 # References:
 - [Docker Installing docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
